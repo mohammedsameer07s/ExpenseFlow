@@ -2,10 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowDownRight,
-  ArrowUpRight,
-  Bell,
-  PiggyBank,
   Plus,
   Target,
   TrendingDown,
@@ -27,7 +23,8 @@ import {
 import AppShell from "./AppShell";
 import Modal from "./Modal";
 import { load, save } from "@/lib/store";
-import { Transaction } from "@/lib/types";
+import { Transaction, TxType } from "@/lib/types";
+import { transactionOptions } from "@/lib/transaction-options";
 
 const money = (n: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -39,6 +36,7 @@ const money = (n: number) =>
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
   const [open, setOpen] = useState(false);
+  const [transactionType, setTransactionType] = useState<TxType>("expense");
 
   useEffect(() => {
     setData(load());
@@ -94,16 +92,8 @@ export default function Dashboard() {
     };
   });
 
-  const savingsGoals = (data?.goals || []).map((goal: any) => ({
-    ...goal,
-    percent: Math.min((goal.current / goal.target) * 100, 100),
-  }));
-
   const recentTransactions = tx.slice(0, 5);
-  const topCategory = categoryData[0];
-  const insightText = topCategory
-    ? `Your highest spending category is ${topCategory.category} at ${money(topCategory.amount)}.`
-    : "Add transactions to unlock personalized insights.";
+  const selectedOptions = transactionOptions[transactionType];
 
   if (!data) return null;
 
@@ -133,7 +123,7 @@ export default function Dashboard() {
           <div className="muted">Overview</div>
           <h1>Good day 👋</h1>
         </div>
-        <button className="btn btn-primary" onClick={() => setOpen(true)}>
+        <button className="btn btn-primary" onClick={() => { setTransactionType("expense"); setOpen(true); }}>
           <Plus size={17} /> Add Transaction
         </button>
       </div>
@@ -172,28 +162,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="quick-grid" style={{ marginTop: 16 }}>
-        <div className="quick-card">
-          <div className="label">Quick action</div>
-          <strong>Add income</strong>
-          <button className="btn btn-ghost" onClick={() => setOpen(true)}>New entry</button>
-        </div>
-        <div className="quick-card">
-          <div className="label">This month</div>
-          <strong>{money(expenses)}</strong>
-          <div className="muted">Spending</div>
-        </div>
-        <div className="quick-card">
-          <div className="label">Goals</div>
-          <strong>{savingsGoals.length}</strong>
-          <div className="muted">Active savings plans</div>
-        </div>
-      </div>
-
       <div className="layout2">
-        <section className="card section-card" style={{ minHeight: 330 }}>
+        <section className="card section-card chart-card">
           <h2>Monthly cash flow</h2>
-          <div style={{ height: 260 }}>
+          <div className="chart-area">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
@@ -210,9 +182,9 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <section className="card section-card">
+        <section className="card section-card chart-card">
           <h2>Expense mix</h2>
-          <div style={{ height: 260 }}>
+          <div className="chart-area">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={categoryData} dataKey="amount" nameKey="category" innerRadius={52} outerRadius={90} paddingAngle={3}>
@@ -259,8 +231,8 @@ export default function Dashboard() {
                 <div className="muted" style={{ fontSize: 12 }}>{item.note}</div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <strong className={item.type === "income" ? "positive" : "negative"}>
-                  {item.type === "income" ? "+" : "-"}
+                <strong className={transactionTone(item.type)}>
+                  {item.type === "income" ? "+" : item.type === "expense" ? "-" : ""}
                   {money(item.amount)}
                 </strong>
                 <div className="muted" style={{ fontSize: 12 }}>{item.date}</div>
@@ -270,45 +242,17 @@ export default function Dashboard() {
         </section>
       </div>
 
-      <div className="layout2" style={{ marginTop: 16 }}>
-        <section className="card section-card">
-          <h2>Smart insights</h2>
-          <div style={{ display: "grid", gap: 12 }}>
-            <div className="insight-box">{insightText}</div>
-            <div className="insight-box">{recentTransactions.length > 0 ? `${recentTransactions[0].category} was your latest focus.` : "Add a new transaction to begin."}</div>
-            <div className="insight-box">Savings goal progress is at {Math.round(savingsGoals[0]?.percent || 0)}%.</div>
-          </div>
-        </section>
-
-        <section className="card section-card">
-          <h2>Highlights</h2>
-          <div style={{ display: "grid", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div className="chip"><ArrowUpRight size={15} /> Income</div>
-              <strong>{money(income)}</strong>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div className="chip"><ArrowDownRight size={15} /> Expenses</div>
-              <strong>{money(expenses)}</strong>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div className="chip"><PiggyBank size={15} /> Goals</div>
-              <strong>{savingsGoals.length} active</strong>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div className="chip"><Bell size={15} /> Alerts</div>
-              <strong>{budgetSummary.filter((item: any) => item.warning).length} budgets over limit</strong>
-            </div>
-          </div>
-        </section>
-      </div>
-
       {open && (
         <Modal title="Add Transaction" onClose={() => setOpen(false)}>
           <form onSubmit={addTransaction} className="form-grid">
             <div className="field">
               <label>Type</label>
-              <select className="input" name="type">
+              <select
+                className="input"
+                name="type"
+                value={transactionType}
+                onChange={(event) => setTransactionType(event.target.value as TxType)}
+              >
                 <option value="expense">Expense</option>
                 <option value="income">Income</option>
                 <option value="transfer">Transfer</option>
@@ -320,7 +264,9 @@ export default function Dashboard() {
             </div>
             <div className="field">
               <label>Category</label>
-              <input className="input" name="category" placeholder="Food" required />
+              <select key={transactionType} className="input" name="category" defaultValue={selectedOptions.categories[0]} required>
+                {selectedOptions.categories.map((category) => <option key={category}>{category}</option>)}
+              </select>
             </div>
             <div className="field">
               <label>Date</label>
@@ -338,7 +284,10 @@ export default function Dashboard() {
             </div>
             <div className="field">
               <label>Description</label>
-              <input className="input" name="note" placeholder="Dinner with friends" />
+              <input key={transactionType} className="input" name="note" list="dashboard-note-options" placeholder="Choose or type a note" defaultValue={selectedOptions.notes[0]} />
+              <datalist id="dashboard-note-options">
+                {selectedOptions.notes.map((note) => <option key={note} value={note} />)}
+              </datalist>
             </div>
             <div className="field full">
               <button className="btn btn-primary">Save Transaction</button>
@@ -352,4 +301,10 @@ export default function Dashboard() {
 
 function budgetPercent(value: number) {
   return Number.isFinite(value) ? Math.max(0, Math.min(value, 100)) : 0;
+}
+
+function transactionTone(type: string) {
+  if (type === "income") return "positive";
+  if (type === "expense") return "negative";
+  return "muted";
 }

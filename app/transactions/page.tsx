@@ -5,7 +5,8 @@ import { PencilLine, Plus, Search, Trash2 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Modal from "@/components/Modal";
 import { load, save } from "@/lib/store";
-import { Transaction } from "@/lib/types";
+import { Transaction, TxType } from "@/lib/types";
+import { transactionOptions } from "@/lib/transaction-options";
 
 const money = (n: number) => "₹" + n.toLocaleString("en-IN");
 
@@ -36,14 +37,14 @@ export default function Page() {
     setData(load());
   }, []);
 
-  if (!data) return null;
+  const transactions = (data?.transactions || []) as Transaction[];
 
   const categories = Array.from(
-    new Set(data.transactions.map((item: any) => String(item.category)))
+    new Set(transactions.map((item) => String(item.category)))
   ) as string[];
 
   const filteredTransactions = useMemo(() => {
-    return data.transactions.filter((item: any) => {
+    return transactions.filter((item) => {
       const haystack = [item.category, item.note, item.method, item.type].join(" ").toLowerCase();
       const matchesSearch = haystack.includes(filters.search.toLowerCase());
       const matchesType = filters.type === "all" || item.type === filters.type;
@@ -54,7 +55,12 @@ export default function Page() {
 
       return matchesSearch && matchesType && matchesCategory && matchesMethod && matchesMin && matchesMax;
     });
-  }, [data.transactions, filters]);
+  }, [transactions, filters]);
+
+  if (!data) return null;
+
+  const selectedType = draft.type as TxType;
+  const selectedOptions = transactionOptions[selectedType] || transactionOptions.expense;
 
   function closeModal() {
     setOpen(false);
@@ -263,8 +269,8 @@ export default function Page() {
                     <td>{item.category}</td>
                     <td>{item.note}</td>
                     <td>{item.method}</td>
-                    <td className={item.type === "income" ? "positive" : "negative"}>
-                      {item.type === "income" ? "+" : "-"}
+                    <td className={transactionTone(item.type)}>
+                      {item.type === "income" ? "+" : item.type === "expense" ? "-" : ""}
                       {money(item.amount)}
                     </td>
                     <td>
@@ -293,7 +299,16 @@ export default function Page() {
               <select
                 className="input"
                 value={draft.type}
-                onChange={(event) => setDraft({ ...draft, type: event.target.value })}
+                onChange={(event) => {
+                  const type = event.target.value as TxType;
+                  const options = transactionOptions[type];
+                  setDraft({
+                    ...draft,
+                    type,
+                    category: options.categories[0],
+                    note: options.notes[0],
+                  });
+                }}
               >
                 <option value="expense">Expense</option>
                 <option value="income">Income</option>
@@ -316,12 +331,16 @@ export default function Page() {
 
             <div className="field">
               <label>Category</label>
-              <input
+              <select
                 className="input"
                 value={draft.category}
                 onChange={(event) => setDraft({ ...draft, category: event.target.value })}
                 required
-              />
+              >
+                {selectedOptions.categories.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
             </div>
 
             <div className="field">
@@ -354,10 +373,14 @@ export default function Page() {
               <label>Description</label>
               <input
                 className="input"
+                list="transaction-note-options"
                 value={draft.note}
                 onChange={(event) => setDraft({ ...draft, note: event.target.value })}
-                placeholder="Dinner with friends"
+                placeholder="Choose or type a note"
               />
+              <datalist id="transaction-note-options">
+                {selectedOptions.notes.map((note) => <option key={note} value={note} />)}
+              </datalist>
             </div>
 
             <div className="field full">
@@ -370,4 +393,10 @@ export default function Page() {
       )}
     </AppShell>
   );
+}
+
+function transactionTone(type: string) {
+  if (type === "income") return "positive";
+  if (type === "expense") return "negative";
+  return "muted";
 }

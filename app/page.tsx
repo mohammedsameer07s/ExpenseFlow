@@ -1,36 +1,50 @@
 import Link from "next/link";
+import { ArrowRight, Check, Play } from "lucide-react";
 
 export default function Page() {
   return (
-    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
-      <section className="card" style={{ maxWidth: 900, padding: "52px 42px" }}>
-        <div className="muted">PERSONAL FINANCE · EXPENSEFLOW</div>
-        <h1 style={{ fontSize: "clamp(42px,8vw,82px)", lineHeight: 1.02, margin: "12px 0 18px" }}>
-          Your money.<br />
-          <span style={{ color: "#8d96ff" }}>One clear view.</span>
-        </h1>
-        <p className="muted" style={{ fontSize: 18, lineHeight: 1.7, maxWidth: 650 }}>
-          Track income, expenses, budgets, recurring payments, and savings goals with a premium dashboard built for real-world financial habits.
-        </p>
+    <main className="landing-shell">
+      <nav className="landing-nav">
+        <div className="brand">Expense<span>Flow</span></div>
+        <div className="landing-nav-actions">
+          <Link className="nav-login" href="/login">Login</Link>
+          <Link className="btn btn-primary" href="/login">Start free <ArrowRight size={16} /></Link>
+        </div>
+      </nav>
 
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 25 }}>
-          <Link className="btn btn-primary" href="/login">Get Started →</Link>
-          <Link className="btn btn-ghost" href="/dashboard">Open Demo</Link>
+      <section className="landing-hero">
+        <div className="landing-copy">
+          <div className="mini-badge"><span className="status-dot" /> Calm money management</div>
+          <h1>Make every rupee feel <em>intentional.</em></h1>
+          <p>
+            ExpenseFlow brings your everyday spending, budgets, and goals into one calm place so you can make better decisions without spreadsheet fatigue.
+          </p>
+          <div className="landing-actions">
+            <Link className="btn btn-primary btn-large" href="/login">Build your money map <ArrowRight size={17} /></Link>
+            <Link className="demo-link" href="/dashboard"><span className="play-icon"><Play size={13} fill="currentColor" /></span> Explore demo</Link>
+          </div>
+          <div className="trust-line"><Check size={15} /> No card required <Check size={15} /> Set up in two minutes</div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginTop: 28 }}>
-          {[
-            ["Income", "₹60,000"],
-            ["Expenses", "₹17,150"],
-            ["Budget Health", "77%"],
-            ["Goals", "3 active"],
-          ].map(([label, value]) => (
-            <div key={label} className="card" style={{ padding: 18 }}>
-              <div className="muted" style={{ fontSize: 12 }}>{label}</div>
-              <div style={{ fontSize: 26, fontWeight: 800, marginTop: 8 }}>{value}</div>
+        <div className="landing-preview" aria-label="ExpenseFlow dashboard preview">
+          <div className="preview-glow" />
+          <div className="preview-window">
+            <div className="preview-topbar"><span className="window-dots"><i /><i /><i /></span><span>expenseflow / overview</span><span className="preview-avatar">A</span></div>
+            <div className="preview-content">
+              <div className="preview-heading"><div><span>Tuesday, September 16</span><strong>Your money at a glance</strong></div><span className="preview-add">+ Add</span></div>
+              <div className="preview-balance"><span>Total balance</span><strong>₹42,850</strong><small><b>+8.4%</b> from last month</small></div>
+              <div className="preview-stats"><div><span>Income</span><strong>₹60,000</strong></div><div><span>Spent</span><strong>₹17,150</strong></div></div>
+              <div className="preview-chart"><div className="chart-label"><span>Cash flow</span><span>Last 6 months</span></div><div className="chart-bars"><i /><i /><i /><i /><i /><i /><i /></div></div>
             </div>
-          ))}
+          </div>
         </div>
+      </section>
+
+      <section className="landing-proof">
+        <span>One view for your whole financial life</span>
+        <div><b>Track</b><small>Every transaction, organized</small></div>
+        <div><b>Plan</b><small>Budgets that match real life</small></div>
+        <div><b>Grow</b><small>Goals that turn into progress</small></div>
       </section>
     </main>
   );

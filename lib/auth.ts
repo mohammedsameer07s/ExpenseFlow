@@ -11,20 +11,12 @@ export type StoredUser = {
   createdAt: string;
 };
 
-const DEMO_USER = {
-  id: "demo-user",
-  name: "Sameer",
-  email: "demo@expenseflow.com",
-  passwordHash: "demo123",
-  createdAt: new Date().toISOString(),
-};
-
 export function getStoredUsers(): StoredUser[] {
-  if (typeof window === "undefined") return [DEMO_USER];
+  if (typeof window === "undefined") return [];
 
   const raw = window.localStorage.getItem(STORAGE_KEYS.users);
   if (!raw) {
-    const seeded = [DEMO_USER];
+    const seeded: StoredUser[] = [];
     window.localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(seeded));
     return seeded;
   }
@@ -32,8 +24,8 @@ export function getStoredUsers(): StoredUser[] {
   try {
     return JSON.parse(raw) as StoredUser[];
   } catch {
-    window.localStorage.setItem(STORAGE_KEYS.users, JSON.stringify([DEMO_USER]));
-    return [DEMO_USER];
+    window.localStorage.setItem(STORAGE_KEYS.users, JSON.stringify([]));
+    return [];
   }
 }
 
