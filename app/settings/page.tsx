@@ -1,2 +1,59 @@
-"use client"; import AppShell from "@/components/AppShell"; import {reset} from "@/lib/store"; import {useState} from "react";
-export default function Page(){const[name,setName]=useState("Sameer");const[currency,setCurrency]=useState("INR");return <AppShell><div className="topbar"><div><div className="muted">Account & preferences</div><h1>Settings</h1></div></div><div className="card section-card" style={{maxWidth:760}}><h2>Profile</h2><div className="form-grid"><div className="field"><label>Name</label><input className="input" value={name} onChange={e=>setName(e.target.value)}/></div><div className="field"><label>Currency</label><select className="input" value={currency} onChange={e=>setCurrency(e.target.value)}><option>INR</option><option>USD</option><option>EUR</option><option>GBP</option></select></div></div><h2 style={{marginTop:30}}>Security</h2><p className="muted">Production authentication should use secure server-side sessions and password hashing.</p><h2 style={{marginTop:30}}>Data</h2><button className="btn btn-danger" onClick={()=>{if(confirm("Reset demo data?"))reset()}}>Reset demo data</button></div></AppShell>}
+"use client";
+import AppShell from "@/components/AppShell";
+import { reset } from "@/lib/store";
+import { useState } from "react";
+export default function Page() {
+  const [name, setName] = useState("");
+  const [currency, setCurrency] = useState("INR");
+  return (
+    <AppShell>
+      <div className="topbar">
+        <div>
+          <div className="muted">Account & preferences</div>
+          <h1>Settings</h1>
+        </div>
+      </div>
+      <div className="card section-card" style={{ maxWidth: 760 }}>
+        <h2>Profile</h2>
+        <div className="form-grid">
+          <div className="field">
+            <label>Name</label>
+            <input
+              className="input"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name"
+            />
+          </div>
+          <div className="field">
+            <label>Currency</label>
+            <select
+              className="input"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+            >
+              <option>INR</option>
+              <option>USD</option>
+              <option>EUR</option>
+              <option>GBP</option>
+            </select>
+          </div>
+        </div>
+        <h2 style={{ marginTop: 30 }}>Security</h2>
+        <p className="muted">
+          Your account currently uses local demo authentication. Server-side
+          sessions are required before production launch.
+        </p>
+        <h2 style={{ marginTop: 30 }}>Data</h2>
+        <button
+          className="btn btn-danger"
+          onClick={() => {
+            if (confirm("Clear all local finance data?")) reset();
+          }}
+        >
+          Clear local data
+        </button>
+      </div>
+    </AppShell>
+  );
+}

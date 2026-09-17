@@ -1,6 +1,33 @@
-import {Transaction,Budget,Goal,Recurring} from "./types";
-const emptyData={transactions:[] as Transaction[],budgets:[] as Budget[],goals:[] as Goal[],recurring:[] as Recurring[]};
-const KEY="expenseflow-v3";
-export function load(){if(typeof window==="undefined")return emptyData;try{const x=localStorage.getItem(KEY);return x?JSON.parse(x):emptyData}catch{return emptyData}}
-export function save(x:any){localStorage.setItem(KEY,JSON.stringify(x))}
-export function reset(){localStorage.removeItem(KEY);location.reload()}
+import { Budget, Goal, Recurring, Transaction } from "./types";
+
+export type FinanceData = {
+  transactions: Transaction[];
+  budgets: Budget[];
+  goals: Goal[];
+  recurring: Recurring[];
+};
+
+export async function load(): Promise<FinanceData> {
+  const response = await fetch("/api/data", { credentials: "include" });
+  if (!response.ok) throw new Error("Unable to load finance data.");
+  return response.json() as Promise<FinanceData>;
+}
+
+export async function save(data: FinanceData) {
+  const response = await fetch("/api/data", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Unable to save finance data.");
+}
+
+export async function reset() {
+  const response = await fetch("/api/data", {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!response.ok) throw new Error("Unable to clear finance data.");
+  window.location.reload();
+}

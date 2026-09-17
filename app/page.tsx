@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Check, Play } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 
 export default function Page() {
   return (
@@ -21,7 +21,6 @@ export default function Page() {
           </p>
           <div className="landing-actions">
             <Link className="btn btn-primary btn-large" href="/login">Build your money map <ArrowRight size={17} /></Link>
-            <Link className="demo-link" href="/dashboard"><span className="play-icon"><Play size={13} fill="currentColor" /></span> Explore demo</Link>
           </div>
           <div className="trust-line"><Check size={15} /> No card required <Check size={15} /> Set up in two minutes</div>
         </div>

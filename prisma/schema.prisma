@@ -1,5 +1,6 @@
 generator client {
-	provider = "prisma-client-js"
+	provider = "prisma-client"
+	output   = "../generated/prisma"
 }
 
 datasource db {
@@ -17,6 +18,16 @@ model User {
 	budgets      Budget[]
 	goals        SavingsGoal[]
 	recurring    RecurringExpense[]
+	sessions     Session[]
+}
+
+model Session {
+	id        String   @id @default(cuid())
+	tokenHash String   @unique
+	userId    String
+	expiresAt DateTime
+	createdAt DateTime @default(now())
+	user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Transaction {

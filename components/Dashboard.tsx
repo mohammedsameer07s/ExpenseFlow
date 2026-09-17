@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  Plus,
-  Target,
-  TrendingDown,
-  TrendingUp,
-  Wallet,
-} from "lucide-react";
+import { Plus, Target, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -25,6 +19,7 @@ import Modal from "./Modal";
 import { load, save } from "@/lib/store";
 import { Transaction, TxType } from "@/lib/types";
 import { transactionOptions } from "@/lib/transaction-options";
+import { summarizeTransactions } from "@/lib/finance";
 
 const money = (n: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -39,15 +34,16 @@ export default function Dashboard() {
   const [transactionType, setTransactionType] = useState<TxType>("expense");
 
   useEffect(() => {
-    setData(load());
+    load()
+      .then(setData)
+      .catch(() =>
+        setData({ transactions: [], budgets: [], goals: [], recurring: [] }),
+      );
   }, []);
 
   const tx = (data?.transactions || []) as Transaction[];
 
-  const income = tx.filter((item) => item.type === "income").reduce((sum, item) => sum + item.amount, 0);
-  const expenses = tx.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount, 0);
-  const balance = income - expenses;
-  const savingsRate = income > 0 ? Math.round((balance / income) * 100) : 0;
+  const { income, expenses, balance, savingsRate } = summarizeTransactions(tx);
 
   const categoryData = useMemo(() => {
     const map: Record<string, number> = {};
@@ -62,7 +58,10 @@ export default function Dashboard() {
   }, [tx]);
 
   const trendData = useMemo(() => {
-    const map = new Map<string, { month: string; income: number; expense: number }>();
+    const map = new Map<
+      string,
+      { month: string; income: number; expense: number }
+    >();
 
     tx.forEach((item) => {
       const month = item.date.slice(0, 7);
@@ -79,7 +78,9 @@ export default function Dashboard() {
 
   const budgetSummary = (data?.budgets || []).map((budget: any) => {
     const spent = tx
-      .filter((item) => item.type === "expense" && item.category === budget.category)
+      .filter(
+        (item) => item.type === "expense" && item.category === budget.category,
+      )
       .reduce((sum, item) => sum + item.amount, 0);
     const percent = Math.min((spent / budget.amount) * 100, 100);
 
@@ -123,7 +124,13 @@ export default function Dashboard() {
           <div className="muted">Overview</div>
           <h1>Good day 👋</h1>
         </div>
-        <button className="btn btn-primary" onClick={() => { setTransactionType("expense"); setOpen(true); }}>
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            setTransactionType("expense");
+            setOpen(true);
+          }}
+        >
           <Plus size={17} /> Add Transaction
         </button>
       </div>
@@ -168,12 +175,18 @@ export default function Dashboard() {
           <div className="chart-area">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(255,255,255,0.08)"
+                />
                 <XAxis dataKey="month" stroke="#9da5b8" />
                 <YAxis stroke="#9da5b8" />
                 <Tooltip
                   formatter={(value: number) => money(Number(value))}
-                  contentStyle={{ background: "#101a2d", border: "1px solid rgba(255,255,255,0.08)" }}
+                  contentStyle={{
+                    background: "#101a2d",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}
                 />
                 <Bar dataKey="income" fill="#42d392" radius={[6, 6, 0, 0]} />
                 <Bar dataKey="expense" fill="#6d7cff" radius={[6, 6, 0, 0]} />
@@ -187,9 +200,23 @@ export default function Dashboard() {
           <div className="chart-area">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={categoryData} dataKey="amount" nameKey="category" innerRadius={52} outerRadius={90} paddingAngle={3}>
+                <Pie
+                  data={categoryData}
+                  dataKey="amount"
+                  nameKey="category"
+                  innerRadius={52}
+                  outerRadius={90}
+                  paddingAngle={3}
+                >
                   {categoryData.map((entry, index) => (
-                    <Cell key={`${entry.category}-${index}`} fill={["#6d7cff", "#9c6cff", "#42d392", "#ffc857", "#ff6b81"][index % 5]} />
+                    <Cell
+                      key={`${entry.category}-${index}`}
+                      fill={
+                        ["#6d7cff", "#9c6cff", "#42d392", "#ffc857", "#ff6b81"][
+                          index % 5
+                        ]
+                      }
+                    />
                   ))}
                 </Pie>
                 <Tooltip formatter={(value: number) => money(Number(value))} />
@@ -207,12 +234,24 @@ export default function Dashboard() {
               <div key={budget.id}>
                 <div className="summary-line">
                   <strong>{budget.category}</strong>
-                  <span className={budget.warning ? "negative" : budget.percent > 80 ? "warning" : "positive"}>
+                  <span
+                    className={
+                      budget.warning
+                        ? "negative"
+                        : budget.percent > 80
+                          ? "warning"
+                          : "positive"
+                    }
+                  >
                     {Math.round(budget.percent)}%
                   </span>
                 </div>
                 <div className="progress" style={{ marginTop: 8 }}>
-                  <div style={{ width: `${Math.min(budgetPercent(budget.percent), 100)}%` }} />
+                  <div
+                    style={{
+                      width: `${Math.min(budgetPercent(budget.percent), 100)}%`,
+                    }}
+                  />
                 </div>
                 <div className="muted" style={{ marginTop: 8, fontSize: 13 }}>
                   {money(budget.spent)} of {money(budget.amount)} used
@@ -225,17 +264,33 @@ export default function Dashboard() {
         <section className="card section-card">
           <h2>Recent activity</h2>
           {recentTransactions.map((item: Transaction) => (
-            <div key={item.id} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+            <div
+              key={item.id}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "12px 0",
+                borderBottom: "1px solid var(--border)",
+              }}
+            >
               <div>
                 <strong>{item.category}</strong>
-                <div className="muted" style={{ fontSize: 12 }}>{item.note}</div>
+                <div className="muted" style={{ fontSize: 12 }}>
+                  {item.note}
+                </div>
               </div>
               <div style={{ textAlign: "right" }}>
                 <strong className={transactionTone(item.type)}>
-                  {item.type === "income" ? "+" : item.type === "expense" ? "-" : ""}
+                  {item.type === "income"
+                    ? "+"
+                    : item.type === "expense"
+                      ? "-"
+                      : ""}
                   {money(item.amount)}
                 </strong>
-                <div className="muted" style={{ fontSize: 12 }}>{item.date}</div>
+                <div className="muted" style={{ fontSize: 12 }}>
+                  {item.date}
+                </div>
               </div>
             </div>
           ))}
@@ -251,7 +306,9 @@ export default function Dashboard() {
                 className="input"
                 name="type"
                 value={transactionType}
-                onChange={(event) => setTransactionType(event.target.value as TxType)}
+                onChange={(event) =>
+                  setTransactionType(event.target.value as TxType)
+                }
               >
                 <option value="expense">Expense</option>
                 <option value="income">Income</option>
@@ -260,17 +317,38 @@ export default function Dashboard() {
             </div>
             <div className="field">
               <label>Amount</label>
-              <input className="input" name="amount" type="number" min="0.01" step="0.01" required />
+              <input
+                className="input"
+                name="amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                required
+              />
             </div>
             <div className="field">
               <label>Category</label>
-              <select key={transactionType} className="input" name="category" defaultValue={selectedOptions.categories[0]} required>
-                {selectedOptions.categories.map((category) => <option key={category}>{category}</option>)}
+              <select
+                key={transactionType}
+                className="input"
+                name="category"
+                defaultValue={selectedOptions.categories[0]}
+                required
+              >
+                {selectedOptions.categories.map((category) => (
+                  <option key={category}>{category}</option>
+                ))}
               </select>
             </div>
             <div className="field">
               <label>Date</label>
-              <input className="input" name="date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required />
+              <input
+                className="input"
+                name="date"
+                type="date"
+                defaultValue={new Date().toISOString().slice(0, 10)}
+                required
+              />
             </div>
             <div className="field">
               <label>Payment Method</label>
@@ -284,9 +362,18 @@ export default function Dashboard() {
             </div>
             <div className="field">
               <label>Description</label>
-              <input key={transactionType} className="input" name="note" list="dashboard-note-options" placeholder="Choose or type a note" defaultValue={selectedOptions.notes[0]} />
+              <input
+                key={transactionType}
+                className="input"
+                name="note"
+                list="dashboard-note-options"
+                placeholder="Choose or type a note"
+                defaultValue={selectedOptions.notes[0]}
+              />
               <datalist id="dashboard-note-options">
-                {selectedOptions.notes.map((note) => <option key={note} value={note} />)}
+                {selectedOptions.notes.map((note) => (
+                  <option key={note} value={note} />
+                ))}
               </datalist>
             </div>
             <div className="field full">

@@ -34,7 +34,7 @@ export default function Page() {
   });
 
   useEffect(() => {
-    setData(load());
+    load().then(setData).catch(() => setData({ transactions: [], budgets: [], goals: [], recurring: [] }));
   }, []);
 
   const transactions = (data?.transactions || []) as Transaction[];

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   BarChart3,
   LayoutDashboard,
@@ -25,11 +26,14 @@ const links = [
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const user = getSessionUser();
+  const [user, setUser] = useState<{ id: string; name: string; email: string } | null>(null);
+
+  useEffect(() => {
+    getSessionUser().then(setUser);
+  }, []);
 
   function handleLogout() {
-    clearSessionUser();
-    router.push("/login");
+    clearSessionUser().finally(() => router.push("/login"));
   }
 
   return (

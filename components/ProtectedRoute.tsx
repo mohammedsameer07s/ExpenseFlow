@@ -9,13 +9,13 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const session = getSessionUser();
-    if (!session) {
-      router.replace("/login");
-      return;
-    }
-
-    setReady(true);
+    getSessionUser().then((session) => {
+      if (!session) {
+        router.replace("/login");
+      } else {
+        setReady(true);
+      }
+    });
   }, [router]);
 
   if (!ready) return null;
