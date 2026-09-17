@@ -11,7 +11,7 @@ Full-featured ExpenseFlow portfolio project foundation.
 - Savings goals and progress
 - Reports with charts and category analysis
 - Rule-based financial insight cards
-- Settings and demo-data reset
+- Settings and local data reset
 - Login screen
 - PostgreSQL + Prisma production data model
 - Mobile responsive UI
@@ -20,11 +20,12 @@ Full-featured ExpenseFlow portfolio project foundation.
 ## Run locally
 ```bash
 npm install
+npx prisma migrate dev --name init
 npm run dev
 ```
 Open http://localhost:3000.
 
-The UI currently uses browser localStorage for a zero-setup demo. The Prisma schema is included for the production database layer.
+Create `.env.local` from `.env.example` and set a real PostgreSQL `DATABASE_URL` before running migrations. Authentication uses salted password hashes and HTTP-only database-backed sessions. Finance data is stored per user through the Prisma API.
 
 ## QA checklist
 - TC-001: User can register successfully.
@@ -37,12 +38,7 @@ The UI currently uses browser localStorage for a zero-setup demo. The Prisma sch
 - TC-008: Transaction deletion removes the record.
 - TC-009: Mobile layout remains usable on narrow screens.
 
-## Production layer still to connect
-- Server-side authentication/session handling
-- Password hashing and account registration
-- Protected API routes / server actions
-- PostgreSQL persistence
-- User ownership/authorization checks
+## Still to build
 - Recurring-expense scheduler
 - Email/push notifications
 - Export CSV/PDF
